@@ -1,0 +1,143 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct Patient {
+    int id;
+    char name[100];
+    int age;
+    char disease[100];
+};
+
+void addPatient() {
+    FILE *fp = fopen("patients.txt", "a");
+    struct Patient p;
+
+    printf("Enter Patient ID: ");
+    scanf("%d", &p.id);
+    printf("Enter Patient Name: ");
+    scanf(" %[^\n]", p.name);
+    printf("Enter Patient Age: ");
+    scanf("%d", &p.age);
+    printf("Enter Disease: ");
+    scanf(" %[^\n]", p.disease);
+
+    fwrite(&p, sizeof(p), 1, fp);
+    fclose(fp);
+
+    printf("Patient added successfully.\n");
+}
+
+void viewPatients() {
+    FILE *fp = fopen("patients.txt", "r");
+    struct Patient p;
+    printf("\n--- All Patients ---\n");
+    while (fread(&p, sizeof(p), 1, fp)) {
+        printf("ID: %d\nName: %s\nAge: %d\nDisease: %s\n\n", p.id, p.name, p.age, p.disease);
+    }
+    fclose(fp);
+}
+
+void searchPatient() {
+    FILE *fp = fopen("patients.txt", "r");
+    struct Patient p;
+    int id, found = 0;
+    printf("Enter ID to search: ");
+    scanf("%d", &id);
+
+    while (fread(&p, sizeof(p), 1, fp)) {
+        if (p.id == id) {
+            printf("ID: %d\nName: %s\nAge: %d\nDisease: %s\n", p.id, p.name, p.age, p.disease);
+            found = 1;
+            break;
+        }
+    }
+    if (!found) {
+        printf("Patient not found.\n");
+    }
+    fclose(fp);
+}
+
+void updatePatient() {
+    FILE *fp = fopen("patients.txt", "r+");
+    struct Patient p;
+    int id, found = 0;
+    printf("Enter ID to update: ");
+    scanf("%d", &id);
+
+    while (fread(&p, sizeof(p), 1, fp)) {
+        if (p.id == id) {
+            printf("Enter new Name: ");
+            scanf(" %[^\n]", p.name);
+            printf("Enter new Age: ");
+            scanf("%d", &p.age);
+            printf("Enter new Disease: ");
+            scanf(" %[^\n]", p.disease);
+
+            fseek(fp, -sizeof(p), SEEK_CUR);
+            fwrite(&p, sizeof(p), 1, fp);
+            found = 1;
+            printf("Record updated.\n");
+            break;
+        }
+    }
+    if (!found) {
+        printf("Patient not found.\n");
+    }
+    fclose(fp);
+}
+
+void deletePatient() {
+    FILE *fp = fopen("patients.txt", "r");
+    FILE *temp = fopen("temp.txt", "w");
+    struct Patient p;
+    int id, found = 0;
+    printf("Enter ID to delete: ");
+    scanf("%d", &id);
+
+    while (fread(&p, sizeof(p), 1, fp)) {
+        if (p.id != id) {
+            fwrite(&p, sizeof(p), 1, temp);
+        } else {
+            found = 1;
+        }
+    }
+
+    fclose(fp);
+    fclose(temp);
+    remove("patients.txt");
+    rename("temp.txt", "patients.txt");
+
+    if (found) {
+        printf("Record deleted.\n");
+    } else {
+        printf("Patient not found.\n");
+    }
+}
+
+int main() {
+    int choice;
+    do {
+        printf("\nHospital Patient Management System\n");
+        printf("1. Add Patient\n");
+        printf("2. View All Patients\n");
+        printf("3. Search Patient\n");
+        printf("4. Update Patient\n");
+        printf("5. Delete Patient\n");
+        printf("6. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: addPatient(); break;
+            case 2: viewPatients(); break;
+            case 3: searchPatient(); break;
+            case 4: updatePatient(); break;
+            case 5: deletePatient(); break;
+            case 6: printf("Exiting...\n"); break;
+            default: printf("Invalid choice.\n");
+        }
+    } while (choice != 6);
+
+    return 0;
+}
